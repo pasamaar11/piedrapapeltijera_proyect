@@ -1,5 +1,5 @@
 import time
-import threading
+import keyboard
 import csv
 import os
 
@@ -13,10 +13,6 @@ puntos_j1 = 0
 puntos_j2 = 0
 empates = 0
 
-# Variables globales para almacenar las jugadas
-jugada_j1 = None
-jugada_j2 = None
-
 # Archivo CSV
 archivo_csv = "jugadas.csv"
 
@@ -25,16 +21,6 @@ if not os.path.exists(archivo_csv):
     with open(archivo_csv, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Ronda", "Jugador 1", "Jugador 2", "Resultado"])
-
-
-def input_jugador1():
-    global jugada_j1
-    jugada_j1 = input("Jugador 1 (a=piedra, s=papel, d=tijera, q=salir): ").lower()
-
-
-def input_jugador2():
-    global jugada_j2
-    jugada_j2 = input("Jugador 2 (4=piedra, 5=papel, 6=tijera, q=salir): ").lower()
 
 
 print("¿Cuántas rondas se quieren jugar?")
@@ -51,46 +37,52 @@ for i in range(rondas):
 
     print("¡YA!\n")
 
-    # Reiniciar jugadas
-    jugada_j1 = None
-    jugada_j2 = None
+    j1jugada = False
+    j2jugada = False
+    j1eleccion = None
+    j2eleccion = None
 
-    # Crear hilos para capturar entradas simultáneamente
-    hilo_j1 = threading.Thread(target=input_jugador1)
-    hilo_j2 = threading.Thread(target=input_jugador2)
+    # Bucle para detectar teclas de ambos jugadores
+    while not j1jugada or not j2jugada:
+        # Jugador 1
+        if not j1jugada:
+            if keyboard.is_pressed("a"):
+                j1eleccion = "piedra"
+                j1jugada = True
+            elif keyboard.is_pressed("s"):
+                j1eleccion = "papel"
+                j1jugada = True
+            elif keyboard.is_pressed("d"):
+                j1eleccion = "tijera"
+                j1jugada = True
+            elif keyboard.is_pressed("q"):
+                print("Jugador 1 ha salido del juego.")
+                exit()
 
-    # Iniciar ambos hilos
-    hilo_j1.start()
-    hilo_j2.start()
+        # Jugador 2
+        if not j2jugada:
+            if keyboard.is_pressed("4"):
+                j2eleccion = "piedra"
+                j2jugada = True
+            elif keyboard.is_pressed("5"):
+                j2eleccion = "papel"
+                j2jugada = True
+            elif keyboard.is_pressed("6"):
+                j2eleccion = "tijera"
+                j2jugada = True
+            elif keyboard.is_pressed("q"):
+                print("Jugador 2 ha salido del juego.")
+                exit()
 
-    # Esperar a que ambos hilos terminen
-    hilo_j1.join()
-    hilo_j2.join()
-
-    # Verificar si algún jugador quiere salir
-    if jugada_j1 == "q":
-        print("Jugador 1 ha salido del juego.")
-        break
-    if jugada_j2 == "q":
-        print("Jugador 2 ha salido del juego.")
-        break
-
-    if jugada_j1 not in opciones_j1 or jugada_j2 not in opciones_j2:
-        print("Alguna tecla no es válida, intenta otra vez.")
-        continue
-
-    jugada1 = opciones_j1[jugada_j1]
-    jugada2 = opciones_j2[jugada_j2]
-
-    print(f"Jugador 1 eligió {jugada1} | Jugador 2 eligió {jugada2}")
+    print(f"Jugador 1 eligió {j1eleccion} | Jugador 2 eligió {j2eleccion}")
 
     # Determinar el ganador
-    if jugada1 == jugada2:
+    if j1eleccion == j2eleccion:
         resultado = "Empate"
         empates += 1
-    elif (jugada1 == "piedra" and jugada2 == "tijera") or \
-            (jugada1 == "papel" and jugada2 == "piedra") or \
-            (jugada1 == "tijera" and jugada2 == "papel"):
+    elif (j1eleccion == "piedra" and j2eleccion == "tijera") or \
+            (j1eleccion == "papel" and j2eleccion == "piedra") or \
+            (j1eleccion == "tijera" and j2eleccion == "papel"):
         resultado = "Jugador 1 gana"
         puntos_j1 += 1
     else:
@@ -100,16 +92,15 @@ for i in range(rondas):
     print(resultado)
     print(f"Marcador -> J1: {puntos_j1} | J2: {puntos_j2} | Empates: {empates}")
 
-    # Guardar la jugada en el archivo CSV
+    # Guardar en CSV
     with open(archivo_csv, "a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([i + 1, jugada1, jugada2, resultado])
+        writer.writerow([i + 1, j1eleccion, j2eleccion, resultado])
 
 # Resultado final
 print("\n=== Resultado Final ===")
 print(f"Jugador 1: {puntos_j1} victorias")
 print(f"Jugador 2: {puntos_j2} victorias")
 print(f"Empates: {empates}")
-
 print(f"\nLas jugadas se han guardado en '{archivo_csv}'.")
 print("Gracias por jugar.")
